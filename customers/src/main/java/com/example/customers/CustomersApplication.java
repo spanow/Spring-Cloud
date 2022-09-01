@@ -1,9 +1,11 @@
 package com.example.customers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import lombok.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -22,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+@EnableCircuitBreaker
 @SpringBootApplication
 public class CustomersApplication {
 
@@ -72,11 +75,17 @@ public class CustomersApplication {
 		}
 	}
 
+	@HystrixCommand(fallbackMethod = "fallback")
 	@Bean
 	SimpleUrlHandlerMapping simpleUrlHandlerMapping(WebSocketHandler customersWebSocketHandler) {
+		//throw exception pour tester le hystrix
 		return new SimpleUrlHandlerMapping(Map.of("/ws/customers", customersWebSocketHandler), 10);
 	}
 
+	public void fallback(Throwable hystrixCommand) {
+		System.out.println("Tester le Hystrix");
+		return;
+	}
 
 	@RestController
 	@RequiredArgsConstructor
